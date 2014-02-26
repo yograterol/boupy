@@ -41,6 +41,13 @@ AWS_BUCKET_NAME = None
 AWS_VAULT_NAME = None
 AWS_KEY_NAME = None
 
+_error_codes = {
+    100: u'Error #00: Can\'t load config.',
+    101: u'Error #01: Folder is not defined.',
+    102: u'Error #02: URL is not defined.',
+    103: u'Error #03: Output folder is not defined.'
+}
+
 
 def load_config(func):
     '''
@@ -59,7 +66,7 @@ def load_config(func):
                         os.path.expanduser('~'),
                         '.boupy/config.json'))
             except IOError:
-                raise SystemExit('Error #00: Can\'t load config.')
+                raise SystemExit(_error_codes.get(100))
         config_data = json.load(config)
 
         global AWS_ACCESS_KEY
@@ -106,7 +113,7 @@ def boupy_up(args):
     encrypt = args.get('--encrypt') or 'N'
 
     if not folder:
-        raise SystemExit('Error #01: Folder is not defined.')
+        raise SystemExit(101)
 
     folder = normalize_path(folder)
     name_out_file = '-'.join((extract_name_folder(folder),
@@ -141,9 +148,9 @@ def boupy_down(args):
     isencrypt = args.get('--isencrypt')
 
     if not url:
-        raise SystemExit('Error #02: URL is not defined.')
+        raise SystemExit(102)
     if not output_folder:
-        raise SystemExit('Error #03: Output folder is not defined.')
+        raise SystemExit(103)
 
     output = 'restore.tar.gz' if not isencrypt in YES else 'restore'
     output = '/tmp/' + output
