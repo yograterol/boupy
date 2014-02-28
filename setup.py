@@ -32,7 +32,7 @@ def read(fname):
 
 setup(
     name='boupy',
-    version="0.1.0",
+    version="0.1.1",
     description='Boupy help your life with file system backup to the cloud!',
     long_description=read("README.rst"),
     author='Yohan Graterol',
@@ -61,4 +61,6 @@ setup(
         ]
     },
     tests_require=['nose'],
+    include_package_data=True,
+    data_files=[('/etc/boupy', ['etc/config.json', ])]
 )
