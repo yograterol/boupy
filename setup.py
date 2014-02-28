@@ -38,7 +38,7 @@ setup(
     author='Yohan Graterol',
     author_email='y@mejorando.la | yograterol@fedoraproject.org',
     url='https://github.com/yograterol/boupy',
-    install_requires=['docopt'],
+    install_requires=['docopt', 'zoort'],
     license=read("LICENSE"),
     zip_safe=False,
     keywords='boupy',

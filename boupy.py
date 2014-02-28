@@ -6,7 +6,7 @@
 '''boupy
 
 Usage:
-  boupy up <folder> [--encrypt=<encrypt>]
+  boupy up <folder> [--encrypt=<encrypt>] [--upload_s3=<upload_s3>] 
   boupy down <url> <output_folder> [--isencrypt=<isencrypt>]
   boupy -h | --help
   boupy --version
@@ -27,19 +27,21 @@ import datetime
 import requests
 from docopt import docopt
 from functools import wraps
-from zoort.zoort import encrypt_file, decrypt_file, factory_uploader
+import zoort
+from zoort import encrypt_file, decrypt_file, factory_uploader
 
 __version__ = "0.1.0"
 __author__ = "Yohan Graterol"
 __license__ = "MIT"
 
 YES = ['y', 'Y']
-PASSWORD_FILE = None
-AWS_ACCESS_KEY = None
-AWS_SECRET_KEY = None
-AWS_BUCKET_NAME = None
-AWS_VAULT_NAME = None
-AWS_KEY_NAME = None
+zoort.PASSWORD_FILE = None
+zoort.AWS_ACCESS_KEY = None
+zoort.AWS_SECRET_KEY = None
+zoort.AWS_BUCKET_NAME = None
+zoort.AWS_VAULT_NAME = None
+zoort.AWS_KEY_NAME = None
+zoort.DELETE_WEEKS = None
 
 _error_codes = {
     100: u'Error #00: Can\'t load config.',
@@ -69,18 +71,13 @@ def load_config(func):
                 raise SystemExit(_error_codes.get(100))
         config_data = json.load(config)
 
-        global AWS_ACCESS_KEY
-        global AWS_SECRET_KEY
-        global AWS_BUCKET_NAME
-        global AWS_VAULT_NAME
-        global AWS_KEY_NAME
-        global PASSWORD_FILE
-        PASSWORD_FILE = config_data.get('password_file')
-        AWS_ACCESS_KEY = config_data.get('aws').get('aws_access_key')
-        AWS_SECRET_KEY = config_data.get('aws').get('aws_secret_key')
-        AWS_BUCKET_NAME = config_data.get('aws').get('aws_bucket_name')
-        AWS_VAULT_NAME = config_data.get('aws').get('aws_vault_name')
-        AWS_KEY_NAME = config_data.get('aws').get('aws_key_name')
+        zoort.PASSWORD_FILE = config_data.get('password_file')
+        zoort.DELETE_WEEKS = config_data.get('delete_weeks')
+        zoort.AWS_ACCESS_KEY = config_data.get('aws').get('aws_access_key')
+        zoort.AWS_SECRET_KEY = config_data.get('aws').get('aws_secret_key')
+        zoort.AWS_BUCKET_NAME = config_data.get('aws').get('aws_bucket_name')
+        zoort.AWS_VAULT_NAME = config_data.get('aws').get('aws_vault_name')
+        zoort.AWS_KEY_NAME = config_data.get('aws').get('aws_key_name')
         return func(*args, **kwargs)
     return wrapper
 
@@ -103,14 +100,15 @@ def extract_name_folder(folder):
 def main():
     '''Main entry point for the boupy CLI.'''
     args = docopt(__doc__, version=__version__)
-    print(args)
     if args.get("up"):
-        pass
+        boupy_up(args)
 
 
 def boupy_up(args):
     folder = args.get('<folder>')
     encrypt = args.get('--encrypt') or 'N'
+    s3 = args.get('--upload_s3') or 'N'
+    uploader = 'S3' if s3 in YES else 'Glacier'
 
     if not folder:
         raise SystemExit(101)
@@ -125,21 +123,25 @@ def boupy_up(args):
     tar.close()
     if encrypt in YES:
         encrypt_file(folder_out_file + '.tar.gz',
-                     folder_out_file, PASSWORD_FILE)
-        factory_uploader(name_backup=folder_out_file,
-                         vault_name=AWS_VAULT_NAME,
+                     folder_out_file, zoort.PASSWORD_FILE)
+        
+        factory_uploader(uploader,
+                         action='upload',
+                         name_backup=folder_out_file,
+                         bucket_name=zoort.AWS_BUCKET_NAME,
                          path=os.path.join(os.path.expanduser('~'),
                                            '.boupy.db'))
     else:
-        factory_uploader(name_backup=folder_out_file + '.tar.gz',
-                         vault_name=AWS_VAULT_NAME,
+        factory_uploader(uploader,
+                         action='upload',
+                         name_backup=folder_out_file + '.tar.gz',
+                         bucket_name=zoort.AWS_BUCKET_NAME,
                          path=os.path.join(os.path.expanduser('~'),
                                            '.boupy.db'))
-    try:
+    if os.path.isfile(folder_out_file + '.tar.gz'):
         os.remove(folder_out_file + '.tar.gz')
+    if os.path.isfile(folder_out_file):
         os.remove(folder_out_file)
-    except OSError:
-        pass
 
 
 def boupy_down(args):

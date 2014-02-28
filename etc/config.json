@@ -1,9 +1,11 @@
 {
     "password_file": "<password_file>",
+    "delete_weeks": "<delete_weeks>",
     "aws": {
         "aws_access_key": "<aws_access_key>",
         "aws_secret_key": "<aws_secret_key>",
         "aws_bucket_name": "<aws_bucket_name>",
+        "aws_vault_name": "<aws_vault_name>",
         "aws_key_name": "<aws_key_name>"
     }
 }
