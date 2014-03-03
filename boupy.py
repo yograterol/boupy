@@ -6,7 +6,7 @@
 '''boupy
 
 Usage:
-  boupy up <folder> [--encrypt=<encrypt>] [--upload_s3=<upload_s3>] 
+  boupy up <folder> [--encrypt=<encrypt>] [--upload_s3=<upload_s3>]
   boupy down <url> <output_folder> [--isencrypt=<isencrypt>]
   boupy -h | --help
   boupy --version
@@ -102,6 +102,8 @@ def main():
     args = docopt(__doc__, version=__version__)
     if args.get("up"):
         boupy_up(args)
+    if args.get("down"):
+        boupy_down(args)
 
 
 def boupy_up(args):
@@ -124,7 +126,7 @@ def boupy_up(args):
     if encrypt in YES:
         encrypt_file(folder_out_file + '.tar.gz',
                      folder_out_file, zoort.PASSWORD_FILE)
-        
+
         factory_uploader(uploader,
                          action='upload',
                          name_backup=folder_out_file,
@@ -154,7 +156,9 @@ def boupy_down(args):
     if not output_folder:
         raise SystemExit(103)
 
-    output = 'restore.tar.gz' if not isencrypt in YES else 'restore'
+    file_name = url.split('/')[-1]
+
+    output = file_name + 'tar.gz' if not isencrypt in YES else file_name
     output = '/tmp/' + output
 
     data = requests.get(url)
