@@ -30,7 +30,7 @@ from functools import wraps
 import zoort
 from zoort import encrypt_file, decrypt_file, factory_uploader
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "Yohan Graterol"
 __license__ = "MIT"
 
